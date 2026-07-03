@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const fetch = require('node-fetch');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -36,7 +37,17 @@ app.post('/api/groq', async (req, res) => {
     return res.status(groqResponse.status).json(data);
 
   } catch (err) {
+    console.error('Groq proxy error:', err);
     return res.status(500).json({ error: err.message || 'Proxy request failed.' });
+  }
+});
+
+// Last-resort safety net: if anything throws unexpectedly, always send valid JSON
+// instead of letting the connection close with an empty body.
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err);
+  if (!res.headersSent) {
+    res.status(500).json({ error: 'Unexpected server error. Check Render logs for details.' });
   }
 });
 
