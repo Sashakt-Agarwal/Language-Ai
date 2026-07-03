@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EzyLanguage — Grammar & Translation Assistant</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #171a23;
+    --panel-2: #1e2230;
+    --border: #2a2f3f;
+    --accent: #6c5ce7;
+    --accent-2: #00d9a3;
+    --text: #e8e9ee;
+    --text-dim: #9599a8;
+    --danger: #ff6b6b;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 19px;
+    font-weight: 700;
+  }
+
+  .logo span.dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent-2);
+    box-shadow: 0 0 10px var(--accent-2);
+  }
+
+  .settings {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .settings input, .settings select {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+
+  .settings input { width: 240px; }
+
+  main {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 900px) {
+    main { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  #inputCard { grid-column: 1 / 2; grid-row: 1 / 3; }
+
+  @media (max-width: 900px) {
+    #inputCard { grid-column: 1; grid-row: auto; }
+  }
+
+  textarea#userText {
+    width: 100%;
+    min-height: 260px;
+    resize: vertical;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 14px;
+    font-size: 15px;
+    line-height: 1.6;
+    outline: none;
+    font-family: inherit;
+  }
+
+  textarea#userText:focus { border-color: var(--accent); }
+
+  .input-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: transform 0.1s, background 0.2s;
+  }
+
+  button:active { transform: scale(0.97); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover:not(:disabled) { background: #5b4bd6; }
+
+  .btn-secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--accent); }
+
+  .btn-mic { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  .btn-mic.recording { background: var(--danger); color: white; animation: pulse 1.2s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .word-count { font-size: 12px; color: var(--text-dim); margin-left: auto; align-self: center; }
+
+  .output-box {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 90px;
+    white-space: pre-wrap;
+  }
+
+  .placeholder { color: var(--text-dim); font-style: italic; }
+
+  .issue-item {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--danger);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+
+  .issue-item .tag {
+    display: inline-block;
+    background: rgba(255,107,107,0.15);
+    color: var(--danger);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+  }
+
+  .issue-item .orig { color: var(--text-dim); text-decoration: line-through; }
+  .issue-item .fix { color: var(--accent-2); font-weight: 600; }
+
+  .lang-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  select#targetLang {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 4px 10px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .score-badge.good { color: var(--accent-2); }
+  .score-badge.mid { color: #ffd166; }
+  .score-badge.bad { color: var(--danger); }
+
+  .loader {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hint { font-size: 12px; color: var(--text-dim); text-align: center; padding: 10px 24px 24px; }
+
+  .empty-state { color: var(--text-dim); font-size: 13.5px; text-align: center; padding: 20px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo"><span class="dot"></span> EzyLanguage</div>
+  <div class="settings">
+    <select id="model">
+      <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+      <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+      <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+      <option value="gemma2-9b-it">Gemma2 9B</option>
+    </select>
+
+  </div>
+</header>
+
+<main>
+
+  <!-- INPUT MODULE -->
+  <div class="card" id="inputCard">
+    <div class="card-title">
+      Your Text
+      <span class="word-count" id="wordCount">0 words</span>
+    </div>
+    <textarea id="userText" placeholder="Type or speak something... e.g. 'me and him goes to market yesterday for buy some fruits'"></textarea>
+    <div class="input-actions">
+      <button class="btn-primary" id="checkBtn">✓ Check & Correct</button>
+      <button class="btn-mic" id="micBtn">🎤 Speak</button>
+      <button class="btn-secondary" id="clearBtn">Clear</button>
+    </div>
+  </div>
+
+  <!-- CORRECTED TEXT MODULE -->
+  <div class="card" id="correctedCard">
+    <div class="card-title">
+      Corrected Text
+      <button class="copy-btn" id="copyCorrected">Copy</button>
+    </div>
+    <div class="output-box" id="correctedOutput"><span class="placeholder">Your corrected text will appear here.</span></div>
+    <div id="scoreRow"></div>
+  </div>
+
+  <!-- ISSUES MODULE -->
+  <div class="card" id="issuesCard">
+    <div class="card-title">Grammar & Style Issues</div>
+    <div id="issuesList"><div class="empty-state">No issues checked yet.</div></div>
+  </div>
+
+  <!-- TRANSLATION MODULE -->
+  <div class="card" id="translateCard">
+    <div class="card-title">
+      Translate
+      <button class="copy-btn" id="copyTranslation">Copy</button>
+    </div>
+    <div class="lang-row">
+      <select id="targetLang">
+        <option value="Spanish">Spanish</option>
+        <option value="French">French</option>
+        <option value="German">German</option>
+        <option value="Hindi">Hindi</option>
+        <option value="Japanese">Japanese</option>
+        <option value="Chinese (Simplified)">Chinese (Simplified)</option>
+        <option value="Arabic">Arabic</option>
+        <option value="Russian">Russian</option>
+        <option value="Portuguese">Portuguese</option>
+        <option value="Italian">Italian</option>
+        <option value="Korean">Korean</option>
+        <option value="Bengali">Bengali</option>
+        <option value="Tamil">Tamil</option>
+        <option value="Urdu">Urdu</option>
+      </select>
+      <button class="btn-primary" id="translateBtn">Translate</button>
+    </div>
+    <div class="output-box" id="translationOutput"><span class="placeholder">Translation will appear here.</span></div>
+  </div>
+
+</main>
+
+<div class="hint">Powered by Groq · your API key stays private on the server, never exposed to visitors.</div>
+
+<script>
+  const modelEl = document.getElementById('model');
+  const userText = document.getElementById('userText');
+  const wordCount = document.getElementById('wordCount');
+  const checkBtn = document.getElementById('checkBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const micBtn = document.getElementById('micBtn');
+  const correctedOutput = document.getElementById('correctedOutput');
+  const issuesList = document.getElementById('issuesList');
+  const scoreRow = document.getElementById('scoreRow');
+  const translateBtn = document.getElementById('translateBtn');
+  const translationOutput = document.getElementById('translationOutput');
+  const targetLang = document.getElementById('targetLang');
+  const copyCorrected = document.getElementById('copyCorrected');
+  const copyTranslation = document.getElementById('copyTranslation');
+
+  let lastCorrected = '';
+  let lastTranslation = '';
+
+  // Word count
+  userText.addEventListener('input', () => {
+    const words = userText.value.trim().split(/\s+/).filter(Boolean);
+    wordCount.textContent = words.length + ' words';
+  });
+
+  clearBtn.addEventListener('click', () => {
+    userText.value = '';
+    wordCount.textContent = '0 words';
+    correctedOutput.innerHTML = '<span class="placeholder">Your corrected text will appear here.</span>';
+    issuesList.innerHTML = '<div class="empty-state">No issues checked yet.</div>';
+    translationOutput.innerHTML = '<span class="placeholder">Translation will appear here.</span>';
+    scoreRow.innerHTML = '';
+    lastCorrected = '';
+    lastTranslation = '';
+  });
+
+  // ---- Speech-to-text (Web Speech API, browser native) ----
+  let recognition = null;
+  let isRecording = false;
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event) => {
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript + ' ';
+        }
+      }
+      if (finalTranscript) {
+        userText.value += (userText.value ? ' ' : '') + finalTranscript.trim();
+        userText.dispatchEvent(new Event('input'));
+      }
+    };
+
+    recognition.onend = () => {
+      isRecording = false;
+      micBtn.classList.remove('recording');
+      micBtn.textContent = '🎤 Speak';
+    };
+  } else {
+    micBtn.disabled = true;
+    micBtn.title = 'Speech recognition not supported in this browser';
+  }
+
+  micBtn.addEventListener('click', () => {
+    if (!recognition) return;
+    if (isRecording) {
+      recognition.stop();
+    } else {
+      recognition.start();
+      isRecording = true;
+      micBtn.classList.add('recording');
+      micBtn.textContent = '● Listening...';
+    }
+  });
+
+  // ---- Groq API helper ----
+  async function callGroq(systemPrompt, userPrompt) {
+    const response = await fetch('/api/groq', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: modelEl.value,
+        temperature: 0.2,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Request failed');
+    }
+    return data.choices?.[0]?.message?.content || '';
+  }
+
+  function extractJSON(raw) {
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('No JSON found in response');
+    return JSON.parse(match[0]);
+  }
+
+  // ---- Grammar Check ----
+  checkBtn.addEventListener('click', async () => {
+    const text = userText.value.trim();
+    if (!text) { alert('Please type or speak something first.'); return; }
+
+    checkBtn.disabled = true;
+    checkBtn.innerHTML = '<span class="loader"></span> Checking...';
+    correctedOutput.innerHTML = '<span class="placeholder">Analyzing...</span>';
+    issuesList.innerHTML = '<div class="empty-state">Checking for issues...</div>';
+    scoreRow.innerHTML = '';
+
+    const systemPrompt = `You are a professional grammar and writing assistant like Grammarly. 
+Given a piece of text, respond ONLY with valid JSON, no markdown, no preamble, in this exact format:
+{
+  "corrected": "the fully corrected version of the text",
+  "score": a number from 0 to 100 representing writing quality of the ORIGINAL text,
+  "issues": [
+    {"type": "Grammar" | "Spelling" | "Punctuation" | "Style" | "Clarity", "original": "the problematic snippet", "fix": "the corrected snippet", "explanation": "short one-sentence reason"}
+  ]
+}
+If there are no issues, return an empty issues array and score 100. Keep explanations concise.`;
+
+    try {
+      const raw = await callGroq(systemPrompt, text);
+      if (!raw) { checkBtn.disabled = false; checkBtn.textContent = '✓ Check & Correct'; return; }
+      const result = extractJSON(raw);
+
+      lastCorrected = result.corrected || text;
+      correctedOutput.textContent = lastCorrected;
+
+      const score = result.score ?? 100;
+      const scoreClass = score >= 85 ? 'good' : score >= 60 ? 'mid' : 'bad';
+      scoreRow.innerHTML = `<span class="score-badge ${scoreClass}">Writing Score: ${score}/100</span>`;
+
+      if (result.issues && result.issues.length > 0) {
+        issuesList.innerHTML = '';
+        result.issues.forEach(issue => {
+          const div = document.createElement('div');
+          div.className = 'issue-item';
+          div.innerHTML = `
+            <span class="tag">${issue.type}</span><br/>
+            <span class="orig">${issue.original}</span> → <span class="fix">${issue.fix}</span>
+            <div style="margin-top:4px; color: var(--text-dim);">${issue.explanation}</div>
+          `;
+          issuesList.appendChild(div);
+        });
+      } else {
+        issuesList.innerHTML = '<div class="empty-state">✅ No issues found. Great writing!</div>';
+      }
+
+    } catch (err) {
+      correctedOutput.innerHTML = `<span class="placeholder">Error: ${err.message}</span>`;
+      issuesList.innerHTML = '<div class="empty-state">Something went wrong.</div>';
+    } finally {
+      checkBtn.disabled = false;
+      checkBtn.textContent = '✓ Check & Correct';
+    }
+  });
+
+  // ---- Translation ----
+  translateBtn.addEventListener('click', async () => {
+    const sourceText = lastCorrected || userText.value.trim();
+    if (!sourceText) { alert('Please type/check some text first.'); return; }
+
+    translateBtn.disabled = true;
+    translateBtn.innerHTML = '<span class="loader"></span>';
+    translationOutput.innerHTML = '<span class="placeholder">Translating...</span>';
+
+    const lang = targetLang.value;
+    const systemPrompt = `You are a professional translator. Translate the user's text into ${lang}. 
+Respond ONLY with the translated text, no explanations, no quotes, no markdown.`;
+
+    try {
+      const raw = await callGroq(systemPrompt, sourceText);
+      if (!raw) { translateBtn.disabled = false; translateBtn.textContent = 'Translate'; return; }
+      lastTranslation = raw.trim();
+      translationOutput.textContent = lastTranslation;
+    } catch (err) {
+      translationOutput.innerHTML = `<span class="placeholder">Error: ${err.message}</span>`;
+    } finally {
+      translateBtn.disabled = false;
+      translateBtn.textContent = 'Translate';
+    }
+  });
+
+  // ---- Copy buttons ----
+  copyCorrected.addEventListener('click', () => {
+    if (!lastCorrected) return;
+    navigator.clipboard.writeText(lastCorrected);
+    copyCorrected.textContent = 'Copied!';
+    setTimeout(() => copyCorrected.textContent = 'Copy', 1200);
+  });
+
+  copyTranslation.addEventListener('click', () => {
+    if (!lastTranslation) return;
+    navigator.clipboard.writeText(lastTranslation);
+    copyTranslation.textContent = 'Copied!';
+    setTimeout(() => copyTranslation.textContent = 'Copy', 1200);
+  });
+</script>
+
+</body>
+</html>
