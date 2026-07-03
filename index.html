@@ -265,10 +265,10 @@
   <div class="logo"><span class="dot"></span> EzyLanguage</div>
   <div class="settings">
     <select id="model">
-      <option value="openai/gpt-oss-120b">GPT-OSS 120B</option>
-      <option value="openai/gpt-oss-20b">GPT-OSS 20B</option>
-      <option value="qwen/qwen3.6-27b">Qwen 3.6 27B</option>
-      <option value="moonshotai/kimi-k2-instruct-0905">Kimi K2</option>
+      <option value="llama-3.3-70b-versatile">Llama 3.3 70B</option>
+      <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
+      <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+      <option value="gemma2-9b-it">Gemma2 9B</option>
     </select>
 
   </div>
@@ -336,14 +336,9 @@
 
 </main>
 
-<div class="hint">⚠️ This file has an API key hardcoded in it — keep it private. Don't share this file or deploy it publicly, or others could use your Groq quota.</div>
+<div class="hint">Powered by Groq · your API key stays private on the server, never exposed to visitors.</div>
 
 <script>
-  // ⚠️ Paste your Groq API key below. Keep this file private — anyone who
-  // opens it (view-source, or a shared/deployed link) can see this key.
-  // Get a free key at https://console.groq.com
-  const GROQ_API_KEY = "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";
-
   const modelEl = document.getElementById('model');
   const userText = document.getElementById('userText');
   const wordCount = document.getElementById('wordCount');
@@ -427,16 +422,10 @@
 
   // ---- Groq API helper ----
   async function callGroq(systemPrompt, userPrompt) {
-    if (!GROQ_API_KEY || GROQ_API_KEY === "PASTE_YOUR_GROQ_API_KEY_HERE") {
-      alert('No API key set. Open the file and paste your Groq API key into the GROQ_API_KEY constant near the top of the <script> section.');
-      return null;
-    }
-
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('/api/groq', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + GROQ_API_KEY
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: modelEl.value,
